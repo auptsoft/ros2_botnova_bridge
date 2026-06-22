@@ -1,0 +1,57 @@
+{
+  "robot": {
+    "robot_id": "turtle1",
+    "robot_name": "turtle1",
+    "model_name": "turtlesim_v1",
+    "robot_type": "simulated"
+  },
+  "state_topics": [
+    {
+      "topic": "/turtle1/pose",
+      "msg_type": "turtlesim/msg/Pose",
+      "fields": {
+        "x": "pos_x",
+        "y": "pos_y",
+        "theta": "theta",
+        "linear_velocity": "linear_velocity",
+        "angular_velocity": "angular_velocity"
+      }
+    }
+  ],
+  "commands": [
+    {
+      "name": "drive",
+      "kind": "publish",
+      "topic": "/turtle1/cmd_vel",
+      "msg_type": "geometry_msgs/msg/Twist",
+      "params": {
+        "linear_x": "linear.x",
+        "angular_z": "angular.z"
+      }
+    },
+    {
+      "name": "teleport_absolute",
+      "kind": "service",
+      "service": "/turtle1/teleport_absolute",
+      "srv_type": "turtlesim/srv/TeleportAbsolute",
+      "params": {
+        "x": "x",
+        "y": "y",
+        "theta": "theta"
+      }
+    },
+    {
+      "name": "set_pen",
+      "kind": "service",
+      "service": "/turtle1/set_pen",
+      "srv_type": "turtlesim/srv/SetPen",
+      "params": {
+        "r": { "path": "r", "type": "int" },
+        "g": { "path": "g", "type": "int" },
+        "b": { "path": "b", "type": "int" },
+        "width": { "path": "width", "type": "int" },
+        "off": { "path": "off", "type": "int" }
+      }
+    }
+  ]
+}

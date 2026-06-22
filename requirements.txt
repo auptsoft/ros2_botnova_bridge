@@ -1,0 +1,4 @@
+# rclpy / rosidl_runtime_py come from the sourced ROS2 install, not pip.
+# paho-mqtt is pinned below 2.0: the 2.x client changed the on_connect/on_message
+# callback signatures, which this bridge relies on in the classic form.
+paho-mqtt>=1.6,<2.0
