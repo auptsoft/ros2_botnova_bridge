@@ -33,6 +33,9 @@ class Transport(ABC):
     def send_onboarding(self, payload: Dict[str, Any]) -> None: ...
 
     @abstractmethod
+    def send_status(self, robot_id: str, status: str) -> None: ...
+
+    @abstractmethod
     def send_command_result(self, robot_id: str, command_id: str, success: bool, message: str = "") -> None: ...
 
     @abstractmethod
@@ -71,6 +74,16 @@ class MqttTransport(Transport):
             "UserID": self._userId
         })
 
+    def send_status(self, robot_id: str, status: str) -> None:
+        self._publish({
+            "Type": "default",
+            "RoutingKey": "robot.status",
+            "RobotID": robot_id,
+            "Payload": {"Status": status},
+            "Time": int(time.time()),
+            "UserID": self._userId
+        })
+
     def send_command_result(self, robot_id: str, command_id: str, success: bool, message: str = "") -> None:
         self._publish({
             "Type": "command",
@@ -90,11 +103,16 @@ class MqttTransport(Transport):
 
     def _on_message(self, client, userdata, msg):
         print("message received \n")
-        if self._command_handler is None:
-            return
         try:
             envelope = json.loads(msg.payload)
         except json.JSONDecodeError:
+            return
+
+        if envelope.get("RoutingKey") == "robot.probe":
+            self.send_status(envelope.get("RobotID", ""), "online")
+            return
+
+        if self._command_handler is None:
             return
         if envelope.get("Type") != "command":
             return

@@ -44,6 +44,7 @@ def main() -> None:
         print("Starting...\n")
         rclpy.spin(bridge)
     finally:
+        transport.send_status(config.robot.robot_id, "offline")
         bridge.destroy_node()
         rclpy.shutdown()
 
