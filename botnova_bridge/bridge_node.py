@@ -7,6 +7,7 @@ new config file, not new code here.
 """
 from __future__ import annotations
 
+import time
 from typing import Any, Dict
 
 from rclpy.node import Node
@@ -27,7 +28,7 @@ class BridgeNode(Node):
         super().__init__("botnova_bridge")
         self._config = config
         self._transport = transport
-        self._publishers: Dict[str, tuple] = {}
+        self._command_publishers: Dict[str, tuple] = {}
         self._service_clients: Dict[str, tuple] = {}
 
         for spec in config.state_topics:
@@ -37,7 +38,7 @@ class BridgeNode(Node):
         for cmd in config.commands:
             if cmd.kind == "publish":
                 msg_cls = get_message(cmd.msg_type)
-                self._publishers[cmd.name] = (msg_cls, self.create_publisher(msg_cls, cmd.topic, 10))
+                self._command_publishers[cmd.name] = (msg_cls, self.create_publisher(msg_cls, cmd.topic, 10))
             elif cmd.kind == "service":
                 srv_cls = get_service(cmd.srv_type)
                 self._service_clients[cmd.name] = (srv_cls, self.create_client(srv_cls, cmd.service))
@@ -50,7 +51,15 @@ class BridgeNode(Node):
         self._transport.send_onboarding(self._config.onboarding_payload())
 
     def _make_state_callback(self, spec):
+        min_interval = 1.0 / spec.max_rate_hz if spec.max_rate_hz else None
+        last_sent = [0.0]
+
         def callback(msg):
+            if min_interval is not None:
+                now = time.monotonic()
+                if now - last_sent[0] < min_interval:
+                    return
+                last_sent[0] = now
             payload = {botnova_name: get_nested(msg, ros_path) for ros_path, botnova_name in spec.fields.items()}
             self._transport.send_state(self._config.robot.robot_id, payload)
         return callback
@@ -73,7 +82,7 @@ class BridgeNode(Node):
             self._transport.send_command_result(robot_id, command_id, False, str(exc))
 
     def _dispatch_publish(self, cmd, params: Dict[str, Any]) -> None:
-        msg_cls, publisher = self._publishers[cmd.name]
+        msg_cls, publisher = self._command_publishers[cmd.name]
         msg = msg_cls()
         for botnova_name, spec in cmd.params.items():
             set_nested(msg, spec.path, _cast(params.get(botnova_name), spec.type))

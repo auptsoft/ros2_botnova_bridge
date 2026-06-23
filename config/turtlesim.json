@@ -1,4 +1,5 @@
 {
+  "user_id": "019e0732-6d5f-70aa-89d1-ddc43cd34143",
   "robot": {
     "robot_id": "turtle1",
     "robot_name": "turtle1",
@@ -9,6 +10,7 @@
     {
       "topic": "/turtle1/pose",
       "msg_type": "turtlesim/msg/Pose",
+      "max_rate_hz": 0.5,
       "fields": {
         "x": "pos_x",
         "y": "pos_y",

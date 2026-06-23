@@ -14,6 +14,7 @@ def main() -> None:
     param_node.declare_parameter("config_path", "")
     param_node.declare_parameter("mqtt_host", "localhost")
     param_node.declare_parameter("mqtt_port", 1883)
+
     config_path = param_node.get_parameter("config_path").value
     mqtt_host = param_node.get_parameter("mqtt_host").value
     mqtt_port = param_node.get_parameter("mqtt_port").value
@@ -30,8 +31,9 @@ def main() -> None:
         host=mqtt_host,
         port=mqtt_port,
         robot_id=config.robot.robot_id,
-        command_topic=f"botnova/cmd/{config.robot.robot_id}",
-        publish_topic=f"botnova/from_robot/{config.robot.robot_id}",
+        command_topic=f"botnova/out/#",
+        publish_topic=f"botnova/in/{config.robot.robot_id}",
+        user_id=config.user_id
     )
     transport.start()
 
@@ -39,6 +41,7 @@ def main() -> None:
     bridge.announce()
 
     try:
+        print("Starting...\n")
         rclpy.spin(bridge)
     finally:
         bridge.destroy_node()

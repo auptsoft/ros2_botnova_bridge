@@ -40,9 +40,10 @@ class Transport(ABC):
 
 
 class MqttTransport(Transport):
-    def __init__(self, host: str, port: int, robot_id: str, command_topic: str, publish_topic: str):
+    def __init__(self, host: str, port: int, robot_id: str, command_topic: str, publish_topic: str, user_id: str):
         self._publish_topic = publish_topic
         self._command_topic = command_topic
+        self._userId = user_id
         self._command_handler: Optional[CommandHandler] = None
 
         self._client = mqtt.Client(client_id=f"botnova-bridge-{robot_id}-{uuid.uuid4()}")
@@ -60,12 +61,14 @@ class MqttTransport(Transport):
         self._publish({"Type": "state", "RobotID": robot_id, "Payload": payload, "Time": int(time.time())})
 
     def send_onboarding(self, payload: Dict[str, Any]) -> None:
+        print("Sending onboarding...\n")
         self._publish({
             "Type": "default",
             "RoutingKey": "robot.onboarding",
             "RobotID": payload["RobotId"],
             "Payload": payload,
             "Time": int(time.time()),
+            "UserID": self._userId
         })
 
     def send_command_result(self, robot_id: str, command_id: str, success: bool, message: str = "") -> None:
@@ -75,15 +78,18 @@ class MqttTransport(Transport):
             "RobotID": robot_id,
             "Payload": {"CommandID": command_id, "Success": success, "Message": message, "Data": {}},
             "Time": int(time.time()),
+            "UserID": self._userId
         })
 
     def _publish(self, envelope: Dict[str, Any]) -> None:
         self._client.publish(self._publish_topic, json.dumps(envelope))
 
     def _on_connect(self, client, userdata, flags, rc):
+        print("connected.\n")
         client.subscribe(self._command_topic)
 
     def _on_message(self, client, userdata, msg):
+        print("message received \n")
         if self._command_handler is None:
             return
         try:

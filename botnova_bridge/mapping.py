@@ -23,6 +23,7 @@ class StateTopicSpec:
     topic: str
     msg_type: str
     fields: Dict[str, str]  # ROS field path -> Botnova property name
+    max_rate_hz: Optional[float] = None  # None/absent = unlimited (send every message)
 
 
 @dataclass
@@ -47,6 +48,7 @@ class RobotSpec:
 @dataclass
 class BridgeConfig:
     robot: RobotSpec
+    user_id: str
     state_topics: List[StateTopicSpec] = field(default_factory=list)
     commands: List[CommandSpec] = field(default_factory=list)
 
@@ -93,7 +95,12 @@ def load_config(path: str) -> BridgeConfig:
     robot = RobotSpec(**raw["robot"])
 
     state_topics = [
-        StateTopicSpec(topic=t["topic"], msg_type=t["msg_type"], fields=t["fields"])
+        StateTopicSpec(
+            topic=t["topic"],
+            msg_type=t["msg_type"],
+            fields=t["fields"],
+            max_rate_hz=t.get("max_rate_hz"),
+        )
         for t in raw.get("state_topics", [])
     ]
 
@@ -110,7 +117,9 @@ def load_config(path: str) -> BridgeConfig:
         for c in raw.get("commands", [])
     ]
 
-    return BridgeConfig(robot=robot, state_topics=state_topics, commands=commands)
+    user_id = raw.get("user_id")
+
+    return BridgeConfig(robot=robot, state_topics=state_topics, commands=commands, user_id=user_id)
 
 
 def get_nested(obj: Any, path: str) -> Any:

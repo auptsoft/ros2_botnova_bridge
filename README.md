@@ -66,7 +66,9 @@ Write a new JSON config (see `config/turtlesim.json`) with three sections:
 - `robot`: `robot_id`, `robot_name`, `model_name`, `robot_type` (`"physical"` or `"simulated"`).
 - `state_topics`: one entry per ROS2 topic to mirror into Botnova state. `fields`
   maps a ROS field path (dotted for nested attributes, e.g. `pose.pose.position.x`)
-  to the Botnova property name.
+  to the Botnova property name. Optional `max_rate_hz` caps how often that topic's
+  messages are forwarded to Botnova (messages arriving sooner are dropped, not
+  buffered); omit it for no limit.
 - `commands`: one entry per command Botnova can send. `kind: "publish"` needs
   `topic`/`msg_type`; `kind: "service"` needs `service`/`srv_type`. `params` maps
   a Botnova param name to either a bare ROS field path (defaults to type `float`)
